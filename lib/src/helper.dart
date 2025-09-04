@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_epub_viewer/src/converter/epub_href_converter.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:json_annotation/json_annotation.dart';
@@ -13,7 +14,9 @@ class EpubChapter {
   final String title;
 
   /// The href of the chapter, use to navigate to the chapter
+  @EpubHrefConverter()
   final String href;
+  @EpubHrefConverter()
   final String id;
 
   /// The subchapters of the chapter
@@ -38,10 +41,7 @@ class EpubSearchResult {
   /// The excerpt of the search result
   String excerpt;
 
-  EpubSearchResult({
-    required this.cfi,
-    required this.excerpt,
-  });
+  EpubSearchResult({required this.cfi, required this.excerpt});
   factory EpubSearchResult.fromJson(Map<String, dynamic> json) =>
       _$EpubSearchResultFromJson(json);
   Map<String, dynamic> toJson() => _$EpubSearchResultToJson(this);
@@ -96,6 +96,7 @@ class EpubDisplaySettings {
   final bool useSnapAnimationAndroid;
 
   /// Theme of the reader, by default it uses the book theme
+  @JsonKey(includeFromJson: false, includeToJson: false)
   final EpubTheme? theme;
 
   EpubDisplaySettings({
@@ -148,12 +149,8 @@ class EpubTextSelection {
   /// The cfi string of the selected text
   final String selectionCfi;
 
-  EpubTextSelection({
-    required this.selectedText,
-    required this.selectionCfi,
-  });
+  EpubTextSelection({required this.selectedText, required this.selectionCfi});
 }
-
 
 /// Abstract interface for loading epub data
 abstract class EpubDataLoader {
@@ -163,9 +160,9 @@ abstract class EpubDataLoader {
 /// File system epub loader implementation
 class FileEpubLoader implements EpubDataLoader {
   final File file;
-  
+
   FileEpubLoader(this.file);
-  
+
   @override
   Future<Uint8List> loadData() {
     return file.readAsBytes();
@@ -176,9 +173,9 @@ class FileEpubLoader implements EpubDataLoader {
 class UrlEpubLoader implements EpubDataLoader {
   final String url;
   final Map<String, String>? headers;
-  
+
   UrlEpubLoader(this.url, {this.headers});
-  
+
   @override
   Future<Uint8List> loadData() async {
     try {
@@ -198,9 +195,9 @@ class UrlEpubLoader implements EpubDataLoader {
 /// Asset epub loader implementation
 class AssetEpubLoader implements EpubDataLoader {
   final String assetPath;
-  
+
   AssetEpubLoader(this.assetPath);
-  
+
   @override
   Future<Uint8List> loadData() async {
     final byteData = await rootBundle.load(assetPath);
@@ -281,16 +278,12 @@ class EpubTheme {
 }
 
 @JsonSerializable(explicitToJson: true)
-
 ///Epub text extraction callback object
 class EpubTextExtractRes {
   String? text;
   String? cfiRange;
 
-  EpubTextExtractRes({
-    this.text,
-    this.cfiRange,
-  });
+  EpubTextExtractRes({this.text, this.cfiRange});
   factory EpubTextExtractRes.fromJson(Map<String, dynamic> json) =>
       _$EpubTextExtractResFromJson(json);
   Map<String, dynamic> toJson() => _$EpubTextExtractResToJson(this);

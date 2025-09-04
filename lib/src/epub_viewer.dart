@@ -21,6 +21,7 @@ class EpubViewer extends StatefulWidget {
     this.displaySettings,
     this.selectionContextMenu,
     this.onAnnotationClicked,
+    this.onImageClicked,
   });
 
   ///Epub controller to manage epub
@@ -52,6 +53,8 @@ class EpubViewer extends StatefulWidget {
   ///Callback for handling annotation click (Highlight and Underline)
   final ValueChanged<String>? onAnnotationClicked;
 
+  final ValueChanged<Image>? onImageClicked;
+
   ///context menu for text selection
   ///if null, the default context menu will be used
   final ContextMenu? selectionContextMenu;
@@ -70,18 +73,19 @@ class _EpubViewerState extends State<EpubViewer> {
   InAppWebViewController? webViewController;
 
   InAppWebViewSettings settings = InAppWebViewSettings(
-      isInspectable: kDebugMode,
-      javaScriptEnabled: true,
-      mediaPlaybackRequiresUserGesture: false,
-      transparentBackground: true,
-      supportZoom: false,
-      allowsInlineMediaPlayback: true,
-      disableLongPressContextMenuOnLinks: false,
-      iframeAllowFullscreen: true,
-      allowsLinkPreview: false,
-      verticalScrollBarEnabled: false,
-      // disableVerticalScroll: true,
-      selectionGranularity: SelectionGranularity.CHARACTER);
+    isInspectable: kDebugMode,
+    javaScriptEnabled: true,
+    mediaPlaybackRequiresUserGesture: false,
+    transparentBackground: true,
+    supportZoom: false,
+    allowsInlineMediaPlayback: true,
+    disableLongPressContextMenuOnLinks: false,
+    iframeAllowFullscreen: true,
+    allowsLinkPreview: false,
+    verticalScrollBarEnabled: false,
+    // disableVerticalScroll: true,
+    selectionGranularity: SelectionGranularity.CHARACTER,
+  );
 
   @override
   void initState() {
@@ -89,84 +93,109 @@ class _EpubViewerState extends State<EpubViewer> {
     super.initState();
   }
 
-  addJavaScriptHandlers() {
+  void addJavaScriptHandlers() {
     webViewController?.addJavaScriptHandler(
-        handlerName: "displayed",
-        callback: (data) {
-          widget.onEpubLoaded?.call();
-        });
+      handlerName: "displayed",
+      callback: (data) {
+        widget.onEpubLoaded?.call();
+      },
+    );
 
     webViewController?.addJavaScriptHandler(
-        handlerName: "rendered",
-        callback: (data) {
-          // widget.onEpubLoaded?.call();
-        });
+      handlerName: "rendered",
+      callback: (data) {
+        // widget.onEpubLoaded?.call();
+      },
+    );
 
     webViewController?.addJavaScriptHandler(
-        handlerName: "chapters",
-        callback: (data) async {
-          final chapters = await widget.epubController.parseChapters();
-          widget.onChaptersLoaded?.call(chapters);
-        });
+      handlerName: "chapters",
+      callback: (data) async {
+        final chapters = await widget.epubController.parseChapters();
+        widget.onChaptersLoaded?.call(chapters);
+      },
+    );
 
     ///selection handler
     webViewController?.addJavaScriptHandler(
-        handlerName: "selection",
-        callback: (data) {
-          var cfiString = data[0];
-          var selectedText = data[1];
-          widget.onTextSelected?.call(EpubTextSelection(
-              selectedText: selectedText, selectionCfi: cfiString));
-        });
+      handlerName: "selection",
+      callback: (data) {
+        var cfiString = data[0];
+        var selectedText = data[1];
+        widget.onTextSelected?.call(
+          EpubTextSelection(
+            selectedText: selectedText,
+            selectionCfi: cfiString,
+          ),
+        );
+      },
+    );
 
     ///search callback
     webViewController?.addJavaScriptHandler(
-        handlerName: "search",
-        callback: (data) async {
-          var searchResult = data[0];
-          widget.epubController.searchResultCompleter.complete(
-              List<EpubSearchResult>.from(
-                  searchResult.map((e) => EpubSearchResult.fromJson(e))));
-        });
+      handlerName: "search",
+      callback: (data) async {
+        var searchResult = data[0];
+        widget.epubController.searchResultCompleter.complete(
+          List<EpubSearchResult>.from(
+            searchResult.map((e) => EpubSearchResult.fromJson(e)),
+          ),
+        );
+      },
+    );
 
     ///current cfi callback
     webViewController?.addJavaScriptHandler(
-        handlerName: "relocated",
-        callback: (data) {
-          var location = data[0];
-          widget.onRelocated?.call(EpubLocation.fromJson(location));
-        });
+      handlerName: "relocated",
+      callback: (data) {
+        var location = data[0];
+        widget.onRelocated?.call(EpubLocation.fromJson(location));
+      },
+    );
 
     webViewController?.addJavaScriptHandler(
-        handlerName: "readyToLoad",
-        callback: (data) {
-          loadBook();
-        });
+      handlerName: "readyToLoad",
+      callback: (data) {
+        loadBook();
+      },
+    );
 
     webViewController?.addJavaScriptHandler(
-        handlerName: "displayError",
-        callback: (data) {
-          // loadBook();
-        });
+      handlerName: "displayError",
+      callback: (data) {
+        // loadBook();
+      },
+    );
 
     webViewController?.addJavaScriptHandler(
-        handlerName: "markClicked",
-        callback: (data) {
-          String cfi = data[0];
-          widget.onAnnotationClicked?.call(cfi);
-        });
+      handlerName: "markClicked",
+      callback: (data) {
+        String cfi = data[0];
+        widget.onAnnotationClicked?.call(cfi);
+      },
+    );
 
     webViewController?.addJavaScriptHandler(
-        handlerName: "epubText",
-        callback: (data) {
-          var text = data[0].trim();
-          var cfi = data[1];
-          widget.epubController.pageTextCompleter
-              .complete(EpubTextExtractRes(text: text, cfiRange: cfi));
-        });
+      handlerName: "epubText",
+      callback: (data) {
+        var text = data[0].trim();
+        var cfi = data[1];
+        widget.epubController.pageTextCompleter.complete(
+          EpubTextExtractRes(text: text, cfiRange: cfi),
+        );
+      },
+    );
+
+    webViewController?.addJavaScriptHandler(
+      handlerName: "imageClickHandler",
+      callback: (args) {
+        //widget.onImageClicked?.call(Image(null));
+        print('image clicked ${args}');
+      },
+    );
   }
 
-  loadBook() async {
+  void loadBook() async {
     var data = await widget.epubSource.epubData;
     final displaySettings = widget.displaySettings ?? EpubDisplaySettings();
     String manager = displaySettings.manager.name;
@@ -175,20 +204,24 @@ class _EpubViewerState extends State<EpubViewer> {
     bool snap = displaySettings.snap;
     bool allowScripted = displaySettings.allowScriptedContent;
     String cfi = widget.initialCfi ?? "";
-    String direction = widget.displaySettings?.defaultDirection.name ??
+    String direction =
+        widget.displaySettings?.defaultDirection.name ??
         EpubDefaultDirection.ltr.name;
 
     bool useCustomSwipe =
         Platform.isAndroid && !displaySettings.useSnapAnimationAndroid;
 
-    String? backgroundColor =
-        widget.displaySettings?.theme?.backgroundColor?.toHex();
-    String? foregroundColor =
-        widget.displaySettings?.theme?.foregroundColor?.toHex();
+    String? backgroundColor = widget.displaySettings?.theme?.backgroundColor
+        ?.toHex();
+    String? foregroundColor = widget.displaySettings?.theme?.foregroundColor
+        ?.toHex();
 
     webViewController?.evaluateJavascript(
-        source:
-            'loadBook([${data.join(',')}], "$cfi", "$manager", "$flow", "$spread", $snap, $allowScripted, "$direction", $useCustomSwipe, "$backgroundColor", "$foregroundColor")');
+      source:
+          'loadBook([${data.join(',')}], "$cfi", "$manager", "$flow", "$spread", $snap, $allowScripted, "$direction", $useCustomSwipe, "$backgroundColor", "$foregroundColor")',
+    );
+
+    widget.epubController.imageClickHandler();
   }
 
   @override
@@ -210,14 +243,22 @@ class _EpubViewerState extends State<EpubViewer> {
       onLoadStart: (controller, url) {},
       onPermissionRequest: (controller, request) async {
         return PermissionResponse(
-            resources: request.resources,
-            action: PermissionResponseAction.GRANT);
+          resources: request.resources,
+          action: PermissionResponseAction.GRANT,
+        );
       },
       shouldOverrideUrlLoading: (controller, navigationAction) async {
         var uri = navigationAction.request.url!;
 
-        if (!["http", "https", "file", "chrome", "data", "javascript", "about"]
-            .contains(uri.scheme)) {
+        if (![
+          "http",
+          "https",
+          "file",
+          "chrome",
+          "data",
+          "javascript",
+          "about",
+        ].contains(uri.scheme)) {
           // if (await canLaunchUrl(uri)) {
           //   // Launch the App
           //   await launchUrl(
@@ -241,11 +282,17 @@ class _EpubViewerState extends State<EpubViewer> {
           // debugPrint(consoleMessage.message);
         }
       },
+
       gestureRecognizers: {
         Factory<VerticalDragGestureRecognizer>(
-            () => VerticalDragGestureRecognizer()),
-        Factory<LongPressGestureRecognizer>(() => LongPressGestureRecognizer(
-            duration: const Duration(milliseconds: 30))),
+          () => VerticalDragGestureRecognizer(),
+        ),
+        Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
+        Factory<LongPressGestureRecognizer>(
+          () => LongPressGestureRecognizer(
+            duration: const Duration(milliseconds: 30),
+          ),
+        ),
       },
     );
   }

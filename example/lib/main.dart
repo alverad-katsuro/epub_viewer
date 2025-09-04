@@ -1,9 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_epub_viewer/flutter_epub_viewer.dart';
 import 'package:example/chapter_drawer.dart';
 import 'package:example/search_page.dart';
 import 'package:flutter/material.dart';
 
+
 void main() {
+  
   runApp(const MyApp());
 }
 
@@ -31,7 +34,8 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color.fromARGB(255, 56, 4, 146)),
         useMaterial3: true,
       ),
       home: const MyHomePage(title: 'Epub Viewer Demo'),
@@ -91,14 +95,15 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Stack(
               children: [
                 EpubViewer(
-                  epubSource: EpubSource.fromUrl(
-                      'https://github.com/IDPF/epub3-samples/releases/download/20230704/accessible_epub_3.epub'),
+                  epubSource: EpubSource.fromAsset(
+                      "assets/Welcome to Japan, Ms Elf! - Volume 01 [J-Novel Club][Premium].epub"),
+                  //"assets/accessible_epub_3.epub"),
                   epubController: epubController,
                   displaySettings: EpubDisplaySettings(
                       flow: EpubFlow.paginated,
-                      useSnapAnimationAndroid: false,
+                      useSnapAnimationAndroid: true,
                       snap: true,
-                      theme: EpubTheme.light(),
+                      theme: EpubTheme.dark(),
                       allowScriptedContent: true),
                   selectionContextMenu: ContextMenu(
                     menuItems: [
@@ -111,7 +116,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ],
                     settings: ContextMenuSettings(
-                        hideDefaultSystemContextMenuItems: true),
+                        hideDefaultSystemContextMenuItems: false),
                   ),
                   onChaptersLoaded: (chapters) {
                     setState(() {
@@ -119,20 +124,31 @@ class _MyHomePageState extends State<MyHomePage> {
                     });
                   },
                   onEpubLoaded: () async {
-                    print('Epub loaded');
+                    if (kDebugMode) {
+                      debugPrint('Epub loaded');
+                    }
                   },
                   onRelocated: (value) {
-                    print("Reloacted to $value");
+                    if (kDebugMode) {
+                      debugPrint("Reloacted to $value");
+                    }
                     setState(() {
                       progress = value.progress;
                     });
                   },
+                  onImageClicked: (a) {
+                    print(a);
+                  },
                   onAnnotationClicked: (cfi) {
-                    print("Annotation clicked $cfi");
+                    if (kDebugMode) {
+                      debugPrint("Annotation clicked $cfi");
+                    }
                   },
                   onTextSelected: (epubTextSelection) {
                     textSelectionCfi = epubTextSelection.selectionCfi;
-                    print(textSelectionCfi);
+                    if (kDebugMode) {
+                      debugPrint(textSelectionCfi);
+                    }
                   },
                 ),
                 Visibility(

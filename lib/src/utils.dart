@@ -1,14 +1,19 @@
 import 'dart:ui';
 
 extension ColorToHex on Color {
-  /// Converts the [Color] to a hex string in the format #RRGGBB.
-  /// If [includeAlpha] is true, the format will be #AARRGGBB.
+  /// Converte a [Color] para uma string hexadecimal no formato #RRGGBB.
+  /// Se [includeAlpha] for true, o formato será #AARRGGBB.
   String toHex({bool includeAlpha = false}) {
-    final alpha =
-        includeAlpha ? this.alpha.toRadixString(16).padLeft(2, '0') : '';
-    final red = this.red.toRadixString(16).padLeft(2, '0');
-    final green = this.green.toRadixString(16).padLeft(2, '0');
-    final blue = this.blue.toRadixString(16).padLeft(2, '0');
-    return '#$alpha$red$green$blue';
+    // Converte o valor inteiro da cor para uma string hexadecimal.
+    // padLeft garante que a string tenha sempre 8 caracteres (AARRGGBB).
+    final String hex = toARGB32().toRadixString(16).padLeft(8, '0');
+
+    // Se a opacidade (alpha) deve ser incluída, retorna a string completa.
+    if (includeAlpha) {
+      return '#$hex';
+    }
+
+    // Caso contrário, remove os dois primeiros caracteres (o canal alpha).
+    return '#${hex.substring(2)}';
   }
 }
