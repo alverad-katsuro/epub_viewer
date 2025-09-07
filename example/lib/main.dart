@@ -1,12 +1,12 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter_epub_viewer/flutter_epub_viewer.dart';
 import 'package:example/chapter_drawer.dart';
+import 'package:example/image/full_screen_viewer.dart';
 import 'package:example/search_page.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-
+import 'package:flutter/services.dart'; // Importe para usar a vibração
+import 'package:flutter_epub_viewer/flutter_epub_viewer.dart';
 
 void main() {
-  
   runApp(const MyApp());
 }
 
@@ -35,7 +35,8 @@ class MyApp extends StatelessWidget {
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color.fromARGB(255, 56, 4, 146)),
+            seedColor: const Color.fromARGB(166, 11, 24, 218)),
+
         useMaterial3: true,
       ),
       home: const MyHomePage(title: 'Epub Viewer Demo'),
@@ -68,8 +69,11 @@ class _MyHomePageState extends State<MyHomePage> {
         controller: epubController,
       ),
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: Text(
+          widget.title,
+          style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
@@ -136,8 +140,15 @@ class _MyHomePageState extends State<MyHomePage> {
                       progress = value.progress;
                     });
                   },
-                  onImageClicked: (a) {
-                    print(a);
+                  onImageClicked: (image) {
+                    HapticFeedback.vibrate();
+
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            FullScreenImageViewer(image: image),
+                      ),
+                    );
                   },
                   onAnnotationClicked: (cfi) {
                     if (kDebugMode) {

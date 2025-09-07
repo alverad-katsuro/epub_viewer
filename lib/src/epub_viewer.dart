@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter_epub_viewer/src/epub_controller.dart';
 import 'package:flutter_epub_viewer/src/helper.dart';
@@ -189,8 +190,13 @@ class _EpubViewerState extends State<EpubViewer> {
     webViewController?.addJavaScriptHandler(
       handlerName: "imageClickHandler",
       callback: (args) {
-        //widget.onImageClicked?.call(Image(null));
-        print('image clicked ${args}');
+        String base64 = args[0];
+        Uint8List decodeBase64(String base64String) {
+          String formattedString = base64String.split(',').last;
+          return base64Decode(formattedString);
+        }
+
+        widget.onImageClicked?.call(Image.memory(decodeBase64(base64)));
       },
     );
   }
@@ -220,8 +226,6 @@ class _EpubViewerState extends State<EpubViewer> {
       source:
           'loadBook([${data.join(',')}], "$cfi", "$manager", "$flow", "$spread", $snap, $allowScripted, "$direction", $useCustomSwipe, "$backgroundColor", "$foregroundColor")',
     );
-
-    widget.epubController.imageClickHandler();
   }
 
   @override

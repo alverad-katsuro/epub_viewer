@@ -37,15 +37,6 @@ class EpubController {
     webViewController?.evaluateJavascript(source: 'previous()');
   }
 
-  void imageClickHandler() async {
-    checkEpubLoaded();
-    final result = await webViewController?.evaluateJavascript(
-      source: "imageClickHandler()",
-    );
-
-    print(result);
-  }
-
   ///Returns current location of epub viewer
   Future<EpubLocation> getCurrentLocation() async {
     checkEpubLoaded();
